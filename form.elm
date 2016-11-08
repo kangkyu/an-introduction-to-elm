@@ -1,7 +1,7 @@
 import Html.App as App
 import Html exposing (..)
 import Html.Attributes exposing (type', placeholder, style)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onInput, onClick)
 
 
 
@@ -21,7 +21,14 @@ type alias Model =
   { name : String
   , password : String
   , passwordAgain : String
+  , validOrInvalid : ValidationResult
   }
+
+
+type ValidationResult
+  = NotDone
+  | Invalid
+  | Valid
 
 
 model : Model
@@ -29,6 +36,7 @@ model =
   { name = ""
   , password = ""
   , passwordAgain = ""
+  , validOrInvalid = NotDone
   }
 
 
@@ -42,6 +50,7 @@ view model =
     [ input [ type' "text", placeholder "Name", onInput Name ] []
     , input [ type' "password", placeholder "Password", onInput Password ] []
     , input [ type' "password", placeholder "Re-enter Password", onInput PasswordAgain ] []
+    , button [ onClick Submit ] [ text "submit" ]
     , viewValidation model
     ]
 
@@ -50,10 +59,16 @@ viewValidation : Model -> Html Msg
 viewValidation model =
   let
     (color, message) =
-      if model.password == model.passwordAgain then
-        ("Green", "okay!")
-      else
-        ("Red", "two passwords do not match")
+      case model.validOrInvalid of
+        NotDone ->
+          ("", "")
+
+        Valid ->
+          ("Green", "okay!")
+
+        Invalid ->
+          ("Red", "two passwords do not match")
+
   in
     div [ style [("color", color)] ] [ text message ]
 
@@ -67,6 +82,7 @@ type Msg
   | Name String
   | Password String
   | PasswordAgain String
+  | Submit
 
 
 update : Msg -> Model -> Model
@@ -83,3 +99,14 @@ update msg model =
 
     PasswordAgain string ->
       { model | passwordAgain = string }
+
+    Submit ->
+      { model | validOrInvalid = validate model }
+
+
+validate : Model -> ValidationResult
+validate model =
+  if (model.password == model.passwordAgain) then
+    Valid
+  else
+    Invalid
